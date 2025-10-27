@@ -19,7 +19,7 @@ IF OBJECT_ID('Servicios', 'U') IS NOT NULL DROP TABLE Servicios;
 IF OBJECT_ID('Alertas', 'U') IS NOT NULL DROP TABLE Alertas;
 GO
 
-
+--Creo tablas con nvarchar por acentos, mayúsculas, etc--
 CREATE TABLE Clientes (
     id_cliente INT IDENTITY(1,1) PRIMARY KEY,
     nombre NVARCHAR(100),
@@ -80,7 +80,7 @@ CREATE TABLE Alertas (
 );
 GO
 
--- FUNCIÓN (PRECIO-COSTO) --
+-- FUNCIÓN (PRECIO-COSTO)  fn para indicar que es una función--
 CREATE OR ALTER FUNCTION fn_margen_servicio(@id_serv INT)
 RETURNS DECIMAL(10,2)
 AS
@@ -88,6 +88,8 @@ BEGIN
     DECLARE @costo DECIMAL(10,2);
     DECLARE @precio DECIMAL(10,2);
     DECLARE @margen DECIMAL(10,2);
+
+    --Agarra costo y precio de la tabla servicios para settear el margen y devolverlo--
 
     SELECT @costo = costo, @precio = precio
     FROM Servicios
@@ -175,8 +177,10 @@ BEGIN
     VALUES (@id_reserva, @id_habitacion, @total);
 END;
 
---Alerta de habitacion
+--Alerta de habitacion usamos un trigger (trg)-- 
+
 CREATE OR ALTER TRIGGER trg_alerta_repeticion_reserva
+
 ON DetalleReserva
 AFTER INSERT
 AS
@@ -212,6 +216,8 @@ VALUES ('Repetition', CONCAT('Cliente ', @id_cliente,
                              ' para la fecha ', CONVERT(VARCHAR(10), @check_in, 120)));
 
 -- Bloquea la segunda carga
+--Hace que un mismo cliente no cargue más de una reserva. 16 xq es problema del usuario y 1 xq es el primer raiseerror que pusimos --
+
 RAISERROR('La habitación ya fue cargada para este cliente y fecha. Alerta generada.', 16, 1);
 ROLLBACK TRANSACTION;
 END
@@ -250,3 +256,30 @@ END;
 GO
 
 
+--- Trigger para impedir duplicación de habitación, usamos trg para aclarar que es un trigger ---
+
+CREATE OR ALTER TRIGGER trg_evitar_habitacion_duplicada
+ON Habitaciones
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1
+        FROM Habitaciones h
+        JOIN inserted i 
+            ON h.tipo = i.tipo 
+           AND h.piso = i.piso 
+           AND h.vista = i.vista
+           AND h.id_habitacion <> i.id_habitacion
+    )
+    BEGIN
+
+    --Hace que no se cargue la habitación duplicada. 16 xq es problema del usuario y 2 xq es el segundo raiseerror que pusimos --
+        RAISERROR('Ya existe una habitación con el mismo tipo, piso y vista.', 16, 2);
+        --Pusimos rollback para que si hay un imprevisto vuelva para atrás--
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
