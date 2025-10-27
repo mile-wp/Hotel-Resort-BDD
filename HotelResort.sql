@@ -7,7 +7,7 @@ GO
 USE HotelResort;
 GO
 
--- CHEQUEO QUE NO EST蒒 EN LA BDD ANTES DE CREARLAS --
+-- CHEQUEO QUE NO EST脡N EN LA BDD ANTES DE CREARLAS --
 
 IF OBJECT_ID('Clientes', 'U') IS NOT NULL DROP TABLE Clientes;
 IF OBJECT_ID('Habitaciones', 'U') IS NOT NULL DROP TABLE Habitaciones;
@@ -80,7 +80,7 @@ CREATE TABLE Alertas (
 );
 GO
 
--- FUNCI覰 (PRECIO-COSTO) --
+-- FUNCI脫N (PRECIO-COSTO) --
 CREATE OR ALTER FUNCTION fn_margen_servicio(@id_serv INT)
 RETURNS DECIMAL(10,2)
 AS
@@ -138,12 +138,12 @@ BEGIN
         THROW 50000, 'Cliente inactivo', 1;
     END;
 
-    -- Validar habitaci髇 disponible
+    -- Validar habitaci贸n disponible
     SELECT @estado_habitacion = estado FROM Habitaciones WHERE id_habitacion = @id_habitacion;
     IF @estado_habitacion <> 'Disponible'
     BEGIN
-        INSERT INTO Alertas(tipo, descripcion) VALUES ('Error', CONCAT('Habitaci髇 no disponible: ', @id_habitacion));
-        THROW 50001, 'Habitaci髇 no disponible', 1;
+        INSERT INTO Alertas(tipo, descripcion) VALUES ('Error', CONCAT('Habitaci贸n no disponible: ', @id_habitacion));
+        THROW 50001, 'Habitaci贸n no disponible', 1;
     END;
 
     -- Determinar temporada
@@ -174,4 +174,79 @@ BEGIN
     INSERT INTO DetalleReserva(id_reserva, id_habitacion, subtotal)
     VALUES (@id_reserva, @id_habitacion, @total);
 END;
+
+--Alerta de habitacion
+CREATE OR ALTER TRIGGER trg_alerta_repeticion_reserva
+ON DetalleReserva
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_cliente INT,
+            @id_habitacion INT,
+            @check_in DATE,
+            @cantidad INT;
+
+    -- Obtener los datos de la reserva reci茅n insertada
+SELECT @id_cliente = r.id_cliente,
+       @id_habitacion = i.id_habitacion,
+       @check_in = r.check_in
+FROM inserted i
+         JOIN Reservas r ON i.id_reserva = r.id_reserva;
+
+-- Contar cu谩ntas veces aparece esa combinaci贸n
+SELECT @cantidad = COUNT(*)
+FROM Reservas r
+         JOIN DetalleReserva dr ON r.id_reserva = dr.id_reserva
+WHERE r.id_cliente = @id_cliente
+  AND dr.id_habitacion = @id_habitacion
+  AND r.check_in = @check_in;
+
+-- Si hay m谩s de una => alerta
+IF @cantidad > 1
+BEGIN
+INSERT INTO Alertas(tipo, descripcion)
+VALUES ('Repetition', CONCAT('Cliente ', @id_cliente,
+                             ' repiti贸 la reserva de la habitaci贸n ', @id_habitacion,
+                             ' para la fecha ', CONVERT(VARCHAR(10), @check_in, 120)));
+
+-- Bloquea la segunda carga
+RAISERROR('La habitaci贸n ya fue cargada para este cliente y fecha. Alerta generada.', 16, 1);
+ROLLBACK TRANSACTION;
+END
+END;
+
+--Alerta de mantenimiento
+CREATE OR ALTER TRIGGER trg_alerta_mantenimiento
+ON Habitaciones
+AFTER UPDATE
+                          AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @id_habitacion INT,
+            @nuevo_estado NVARCHAR(20);
+
+SELECT @id_habitacion = i.id_habitacion,
+       @nuevo_estado = i.estado
+FROM inserted i
+         JOIN deleted d ON i.id_habitacion = d.id_habitacion;
+
+-- Si el estado se cambi贸 a FueraServicio
+IF @nuevo_estado = 'FueraServicio'
+BEGIN
+        -- Inactivar la habitaci贸n autom谩ticamente
+UPDATE Habitaciones
+SET estado = 'Inactiva'
+WHERE id_habitacion = @id_habitacion;
+
+-- Registrar alerta
+INSERT INTO Alertas(tipo, descripcion)
+VALUES ('Mantenimiento', CONCAT('Habitaci贸n ', @id_habitacion,
+                                ' marcada como FueraServicio e inactivada autom谩ticamente.'));
+END
+END;
 GO
+
+
