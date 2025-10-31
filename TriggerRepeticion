@@ -1,0 +1,48 @@
+-- ================================================
+-- TRIGGER: Evita duplicación de habitación por cliente y fecha de Check-In
+-- ================================================
+CREATE OR ALTER TRIGGER TRG_NoHabitacionRepetida
+ON DetalleReserva
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Si hay alguna coincidencia de habitación y check-in para el mismo cliente
+    -- entre los registros nuevos (inserted) y los existentes, se bloquea el insert.
+    IF EXISTS (
+        SELECT 1
+        FROM inserted i
+        JOIN Reserva r_i ON i.IDReserva = r_i.IDReserva
+        JOIN DetalleReserva dr ON dr.IDHabitacion = i.IDHabitacion
+        JOIN Reserva r ON dr.IDReserva = r.IDReserva
+        WHERE 
+            r_i.IDCliente = r.IDCliente  -- mismo cliente
+            AND i.CheckIn = dr.CheckIn   -- misma fecha de check-in
+            AND dr.IDDetalleReserva <> i.IDDetalleReserva -- no es el mismo registro
+    )
+    BEGIN
+        RAISERROR ('❌ No se puede registrar la misma habitación para el mismo cliente en la misma fecha de Check-In.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN;
+    END
+END;
+GO
+
+-- =============================
+-- PRUEBA DE DUPLICADO
+-- =============================
+
+-- Primero creamos una nueva reserva para María
+INSERT INTO Reserva (IDCliente, FechaReserva)
+VALUES (1, '2025-08-02');  -- Nueva reserva de María
+
+-- Intentamos agregar un DetalleReserva con la misma habitación y el mismo CheckIn
+INSERT INTO DetalleReserva (IDReserva, IDHabitacion, CheckIn, CheckOut)
+VALUES 
+((SELECT TOP 1 IDReserva FROM Reserva WHERE IDCliente = 1 ORDER BY IDReserva DESC),
+ 1,  -- misma habitación
+ '2025-08-05',  -- mismo CheckIn
+ '2025-08-08'); -- mismo CheckOut
+
+
