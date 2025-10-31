@@ -1,0 +1,30 @@
+-- =============================================
+-- Función para obtener la temporada
+-- =============================================
+
+
+CREATE FUNCTION dbo.ObtenerTemporada
+(
+    @FechaCheckIn DATE
+)
+RETURNS NVARCHAR(10)
+AS
+BEGIN
+    DECLARE @Mes INT = MONTH(@FechaCheckIn)
+    DECLARE @Temporada NVARCHAR(10)
+
+    IF @Mes >= 1 AND @Mes <= 3
+        SET @Temporada = 'Alta'
+    ELSE IF @Mes >= 4 AND @Mes <= 8
+        SET @Temporada = 'Media'
+    ELSE
+        SET @Temporada = 'Baja'
+
+    RETURN @Temporada
+END;
+GO
+
+SELECT dbo.ObtenerTemporada('2025-02-15')  -- Devuelve 'Alta'
+SELECT dbo.ObtenerTemporada('2025-06-01')  -- Devuelve 'Media'
+SELECT dbo.ObtenerTemporada('2025-11-20')  -- Devuelve 'Baja'
+
