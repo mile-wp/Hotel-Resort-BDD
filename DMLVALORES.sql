@@ -45,10 +45,10 @@ INSERT INTO Servicio (Tipo, CupoDiario, Precio) VALUES ('Spa', 3, 5000.00),
 
 -- Consumos de servicios
 INSERT INTO ConsumoServicio (IDServicio, IDHabitacion, Cantidad, FechaConsumo) VALUES (1, 1, 1, '2025-06-12'),  -- María usó Spa
-(2, 1, 1),  -- María usó Transporte
-(3, 2, 2),  -- Juan tuvo 2 cenas
-(1, 3, 1),  -- Lucía usó Spa
-(3, 3, 1);  -- Lucía tuvo 1 cena
+(2, 1, 1, '2026-12-1'),  -- María usó Transporte
+(3, 2, 2, '2025-03-4'),  -- Juan tuvo 2 cenas
+(1, 3, 1, '2025-09-11'),  -- Lucía usó Spa
+(3, 3, 1, '2026-12-2');  -- Lucía tuvo 1 cena
 
 -- Tarifas de servicio
 INSERT INTO TarifaServicio (IDHabitacion, Subtotal) VALUES (1, 8000.00),
