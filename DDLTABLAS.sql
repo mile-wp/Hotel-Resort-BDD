@@ -104,6 +104,7 @@ CREATE TABLE ConsumoServicio (
     IDServicio INT NOT NULL,
     IDHabitacion INT NOT NULL,
     Cantidad INT NOT NULL,
+    FechaConsumo Date,
     FOREIGN KEY (IDServicio) REFERENCES Servicio(IDServicio),
     FOREIGN KEY (IDHabitacion) REFERENCES Habitacion(IDHabitacion)
 );
