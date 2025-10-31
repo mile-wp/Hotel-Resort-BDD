@@ -40,12 +40,14 @@ CREATE TABLE Cliente (
     Estado NVARCHAR(20) CHECK (Estado IN ('Activo', 'Inactivo'))
 );
 
+
+
 CREATE TABLE TipoHabitacion (
     IDTipo INT IDENTITY(1,1) PRIMARY KEY,
-    Descripcion NVARCHAR(50) CHECK (Descripcion IN ('Est·ndar', 'Superior', 'Suite')),
+    Descripcion NVARCHAR(50) CHECK (Descripcion IN ('Est√°ndar', 'Superior', 'Suite')),
     Capacidad INT NOT NULL,
     CONSTRAINT CK_Tipo_Capacidad CHECK (
-        (Descripcion = 'Est·ndar' AND Capacidad = 2) OR
+        (Descripcion = 'Est√°ndar' AND Capacidad = 2) OR
         (Descripcion = 'Superior' AND Capacidad = 4) OR
         (Descripcion = 'Suite' AND Capacidad = 6)
     )
@@ -56,9 +58,10 @@ CREATE TABLE Habitacion (
     IDTipo INT NOT NULL,
     Piso INT CHECK (Piso BETWEEN 1 AND 12),
     Estado NVARCHAR(30) CHECK (Estado IN ('Activo', 'Fuera de Servicio')),
-    Vista NVARCHAR(30) CHECK (Vista IN ('JardÌn', 'Mar', 'Interior')),
+    Vista NVARCHAR(30) CHECK (Vista IN ('Jard√≠n', 'Mar', 'Interior')),
     FOREIGN KEY (IDTipo) REFERENCES TipoHabitacion(IDTipo)
 );
+
 
 CREATE TABLE PrecioHabitacion (
     IDPrecioHabitacion INT IDENTITY(1,1) PRIMARY KEY,
@@ -87,9 +90,9 @@ CREATE TABLE DetalleReserva (
 
 CREATE TABLE TarifaHabitacion (
     IDTarifaHabitacion INT IDENTITY(1,1) PRIMARY KEY,
-    IDHabitacion INT NOT NULL,
+    IDDetalleReserva INT NOT NULL,
     Subtotal DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (IDHabitacion) REFERENCES Habitacion(IDHabitacion)
+    FOREIGN KEY (IDDetalleReserva) REFERENCES DetalleReserva(IDDetalleReserva)
 );
 
 CREATE TABLE Servicio (
@@ -102,18 +105,18 @@ CREATE TABLE Servicio (
 CREATE TABLE ConsumoServicio (
     IDConsumoServicio INT IDENTITY(1,1) PRIMARY KEY,
     IDServicio INT NOT NULL,
-    IDHabitacion INT NOT NULL,
+    IDDetalleReserva INT NOT NULL,
+    FechaConsumo DATE NOT NULL, 
     Cantidad INT NOT NULL,
-    FechaConsumo Date NOT NULL,
     FOREIGN KEY (IDServicio) REFERENCES Servicio(IDServicio),
-    FOREIGN KEY (IDHabitacion) REFERENCES Habitacion(IDHabitacion)
+    FOREIGN KEY (IDDetalleReserva) REFERENCES DetalleReserva(IDDetalleReserva)
 );
 
 CREATE TABLE TarifaServicio (
     IDTarifaServicio INT IDENTITY(1,1) PRIMARY KEY,
-    IDHabitacion INT NOT NULL,
+    IDDetalleReserva INT NOT NULL,
     Subtotal DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (IDHabitacion) REFERENCES Habitacion(IDHabitacion)
+    FOREIGN KEY (IDDetalleReserva) REFERENCES DetalleReserva(IDDetalleReserva)
 );
 
 CREATE TABLE Factura (
