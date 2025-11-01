@@ -11,21 +11,24 @@ USE TPO;
 GO
 
 -- ================================================
--- TABLAS DEL SISTEMA HOTELERO
+-- ELIMINAR TABLAS EN ORDEN JERÁRQUICO CORRECTO
 -- ================================================
 
-IF OBJECT_ID('dbo.DetalleFactura', 'U') IS NOT NULL DROP TABLE DetalleFactura;
-IF OBJECT_ID('dbo.Factura', 'U') IS NOT NULL DROP TABLE Factura;
-IF OBJECT_ID('dbo.TarifaServicio', 'U') IS NOT NULL DROP TABLE TarifaServicio;
-IF OBJECT_ID('dbo.ConsumoServicio', 'U') IS NOT NULL DROP TABLE ConsumoServicio;
-IF OBJECT_ID('dbo.Servicio', 'U') IS NOT NULL DROP TABLE Servicio;
-IF OBJECT_ID('dbo.TarifaHabitacion', 'U') IS NOT NULL DROP TABLE TarifaHabitacion;
-IF OBJECT_ID('dbo.DetalleReserva', 'U') IS NOT NULL DROP TABLE DetalleReserva;
-IF OBJECT_ID('dbo.Reserva', 'U') IS NOT NULL DROP TABLE Reserva;
-IF OBJECT_ID('dbo.PrecioHabitacion', 'U') IS NOT NULL DROP TABLE PrecioHabitacion;
-IF OBJECT_ID('dbo.Habitacion', 'U') IS NOT NULL DROP TABLE Habitacion;
-IF OBJECT_ID('dbo.TipoHabitacion', 'U') IS NOT NULL DROP TABLE TipoHabitacion;
-IF OBJECT_ID('dbo.Cliente', 'U') IS NOT NULL DROP TABLE Cliente;
+IF OBJECT_ID('dbo.DetalleFactura', 'U') IS NOT NULL DROP TABLE dbo.DetalleFactura;
+IF OBJECT_ID('dbo.Factura', 'U') IS NOT NULL DROP TABLE dbo.Factura;
+IF OBJECT_ID('dbo.TarifaServicio', 'U') IS NOT NULL DROP TABLE dbo.TarifaServicio;
+IF OBJECT_ID('dbo.ConsumoServicio', 'U') IS NOT NULL DROP TABLE dbo.ConsumoServicio;
+IF OBJECT_ID('dbo.Servicio', 'U') IS NOT NULL DROP TABLE dbo.Servicio;
+IF OBJECT_ID('dbo.TarifaHabitacion', 'U') IS NOT NULL DROP TABLE dbo.TarifaHabitacion;
+IF OBJECT_ID('dbo.DetalleReserva', 'U') IS NOT NULL DROP TABLE dbo.DetalleReserva;
+IF OBJECT_ID('dbo.Reserva', 'U') IS NOT NULL DROP TABLE dbo.Reserva;
+IF OBJECT_ID('dbo.PrecioHabitacion', 'U') IS NOT NULL DROP TABLE dbo.PrecioHabitacion;
+IF OBJECT_ID('dbo.Alertas', 'U') IS NOT NULL DROP TABLE dbo.Alertas;
+IF OBJECT_ID('dbo.Habitacion', 'U') IS NOT NULL DROP TABLE dbo.Habitacion;
+IF OBJECT_ID('dbo.TipoHabitacion', 'U') IS NOT NULL DROP TABLE dbo.TipoHabitacion;
+IF OBJECT_ID('dbo.Cliente', 'U') IS NOT NULL DROP TABLE dbo.Cliente;
+GO
+
 GO
 
 
@@ -95,12 +98,15 @@ CREATE TABLE TarifaHabitacion (
     FOREIGN KEY (IDDetalleReserva) REFERENCES DetalleReserva(IDDetalleReserva)
 );
 
+
 CREATE TABLE Servicio (
     IDServicio INT IDENTITY(1,1) PRIMARY KEY,
     Tipo NVARCHAR(50) CHECK (Tipo IN ('Spa', 'Transporte', 'Cena')),
     CupoDiario INT CONSTRAINT CK_CupoDiario CHECK (CupoDiario = 3),
-    Precio DECIMAL(10,2)
+    Precio DECIMAL(10,2),
+    Costo DECIMAL(10,2) 
 );
+
 
 CREATE TABLE ConsumoServicio (
     IDConsumoServicio INT IDENTITY(1,1) PRIMARY KEY,
@@ -137,4 +143,17 @@ CREATE TABLE DetalleFactura (
     FOREIGN KEY (IDTarifaServicio) REFERENCES TarifaServicio(IDTarifaServicio),
     FOREIGN KEY (IDTarifaHabitacion) REFERENCES TarifaHabitacion(IDTarifaHabitacion)
 );
+-- =============================
+-- LA TABLA ALERTAS QUE NO ESTA EN EL DER, SIRVE PARA ALERTAR Y DEJAR REGISTRO DE REPETICIONES E INACTIVACIONES DE HABITACIONES
+-- =============================
+CREATE TABLE Alertas (
+    IDAlerta INT IDENTITY(1,1) PRIMARY KEY,
+    IDHabitacion INT NULL,
+    IDCliente INT NULL,
+    Descripcion NVARCHAR(100),
+    FechaHorarioAlerta DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (IDHabitacion) REFERENCES Habitacion(IDHabitacion),
+    FOREIGN KEY (IDCliente) REFERENCES Cliente(IDCliente)
+);
+
 GO
