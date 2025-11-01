@@ -1,0 +1,57 @@
+-- ================================================
+-- Cursor que inactiva habitaciones y genera alerta
+-- ================================================
+DECLARE @ListaHabitaciones NVARCHAR(100) = '10';  -- 🔹 IDs que querés inactivar
+DECLARE @IDHabitacion INT;
+
+-- Convertimos la lista en una tabla temporal
+DECLARE @Temp TABLE (IDHabitacion INT);
+INSERT INTO @Temp
+SELECT TRY_CAST(value AS INT)
+FROM STRING_SPLIT(@ListaHabitaciones, ',')
+WHERE TRY_CAST(value AS INT) IS NOT NULL;
+
+-- Cursor para recorrer cada ID de habitación
+DECLARE c CURSOR FOR
+SELECT IDHabitacion FROM @Temp;
+
+OPEN c;
+FETCH NEXT FROM c INTO @IDHabitacion;
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    -- Si la habitación existe y está activa, la inactivamos
+    IF EXISTS (SELECT 1 FROM Habitacion WHERE IDHabitacion = @IDHabitacion AND Estado = 'Activo')
+    BEGIN
+        UPDATE Habitacion
+        SET Estado = 'Fuera de Servicio'
+        WHERE IDHabitacion = @IDHabitacion;
+
+        -- Insertamos alerta del cambio
+        INSERT INTO Alertas (IDHabitacion, Descripcion)
+        VALUES (@IDHabitacion, 'Habitación inactivada por mantenimiento');
+    END
+
+    FETCH NEXT FROM c INTO @IDHabitacion;
+END
+
+CLOSE c;
+DEALLOCATE c;
+
+
+-- =============================
+-- AGREGAR HABITACIONES ADICIONALES PARA PRUEBA DE ALERTAS
+-- =============================
+INSERT INTO Habitacion (IDTipo, Piso, Estado, Vista)
+VALUES 
+(1, 10, 'Activo', 'Mar'),      -- nueva habitación Estándar
+(2, 11, 'Activo', 'Jardín'),   -- nueva habitación Superior
+(3, 12, 'Activo', 'Interior'), -- nueva habitación Suite
+(1, 1, 'Activo', 'Interior');  -- otra Estándar
+GO
+
+-- Verificamos las habitaciones
+SELECT * FROM Habitacion;
+
+-- Verificamos en la tabla Alertas si se registro
+SELECT * FROM Alertas
