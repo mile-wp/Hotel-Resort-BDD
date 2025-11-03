@@ -96,11 +96,11 @@ GO
 -- =============================
 -- SERVICIOS DISPONIBLES
 -- =============================
-INSERT INTO Servicio (Tipo, CupoDiario, Precio)
+INSERT INTO Servicio (Tipo, CupoDiario, Precio, Costo)
 VALUES 
-('Spa', 3, 2000),
-('Transporte', 3, 3500),
-('Cena', 3, 2500);
+('Spa', 3, 2000, 1000),
+('Transporte', 3, 3500, 2000),
+('Cena', 3, 2500, 1500);
 GO
 
 
