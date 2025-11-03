@@ -3,7 +3,7 @@
 -- =============================================
 
 
-CREATE FUNCTION dbo.ObtenerTemporada
+CREATE OR ALTER FUNCTION dbo.ObtenerTemporada
 (
     @FechaCheckIn DATE
 )
